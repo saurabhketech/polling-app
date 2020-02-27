@@ -1,5 +1,6 @@
 import React, { Component } from "react"
-import { Form, Button } from "react-bootstrap";
+import { Form, Button, Spinner } from "react-bootstrap";
+import Toaster from "../toast/toast";
 
 export default class RegisterForm extends Component {
     constructor(props) {
@@ -10,15 +11,18 @@ export default class RegisterForm extends Component {
                 password: "",
                 role: ""
             },
-            submitDisable: false
+            submitDisable: true
         }
     }
     handleSubmit = async event => {
         await this.setState({ "submitDisable": true })
         const { username, password, role } = this.state.formData;
+        let response;
         if (username && password && role) {
-            this.props.registerRequest(this.state.formData);
+           response = await this.props.registerRequest(this.state.formData);
         }
+
+        console.log("response", response);
     };
 
     handleFormChange = e => {
@@ -29,11 +33,17 @@ export default class RegisterForm extends Component {
             [name]: value
         }
         this.setState({ ...this.state.formData, formData });
+        if (formData.username && formData.password && formData.role && formData.password.length > 3) {
+            this.setState({ "submitDisable": false })
+        } else if (formData.password.length <= 3) {
+            this.setState({ "submitDisable": true })
+
+        }
     };
     isDisabled() {
         return this.state.submitDisable
     }
-    render() {
+    render() {        
         return (
             <Form >
                 <Form.Group controlId="formBasicEmail">
@@ -57,7 +67,20 @@ export default class RegisterForm extends Component {
                     </Form.Control>
                 </Form.Group>
 
-                <Button variant="primary" type="button" onClick={this.handleSubmit} disabled={this.isDisabled()}>
+
+                {this.props.registerStatus.isError == true ? <Toaster show="true" type="danger" message={this.props.registerStatus.error} /> : null}
+
+                {this.props.registerStatus.isRegistered == true ? <Toaster show="true" type="success" message="Account Created" /> : null}
+
+
+                <Button variant="primary" type="button" onClick={this.handleSubmit} disabled={this.state.submitDisable}>
+                    {this.props.registerStatus.isLoading == true ? <Spinner
+                        as="span"
+                        animation="grow"
+                        size="sm"
+                        role="status"
+                        aria-hidden="true"
+                    /> : null}
                     Register
             </Button>
             </Form>
